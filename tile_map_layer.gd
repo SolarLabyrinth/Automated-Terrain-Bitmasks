@@ -81,7 +81,7 @@ func parse_image(img: Image, cell_width: int, cell_height: int):
 func _ready() -> void:
     var img = Image.load_from_file(BITMASK_TEPLATE)
     var result = parse_image(img, CELL_WIDTH, CELL_HEIGHT)
-    print(result.terrains)
+    # print(result.terrains)
 
     var terrainColorToId = {}
     for terrain_id in range(tile_set.get_terrains_count(TERRAIN_SET_ID)):
@@ -101,7 +101,7 @@ func _ready() -> void:
         terrainColorToId[terrain_color] = terrain_id
 
     var src: TileSetAtlasSource = tile_set.get_source(0)
-    print(tile_set.get_source_count())
+    # print(tile_set.get_source_count())
 
     # var grid_size = src.get_atlas_grid_size()
     for cell in result.cells:
@@ -141,5 +141,6 @@ func _ready() -> void:
     # print(data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_SIDE))
 
     ResourceSaver.save(tile_set, "test.tres")
+    print("Terrains Created")
 
     pass

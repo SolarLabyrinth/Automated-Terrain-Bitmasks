@@ -1,13 +1,15 @@
-[gd_resource type="TileSet" load_steps=3 format=3]
+[gd_resource type="TileSet" load_steps=3 format=3 uid="uid://dqfcuvfldw6m1"]
 
-[ext_resource type="Texture2D" path="res://mask16.png" id="1_o718c"]
+[ext_resource type="Texture2D" uid="uid://bljmva117d6i7" path="res://mask16.png" id="1_o718c"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fadyg"]
 texture = ExtResource("1_o718c")
 0:0/0 = 0
 0:0/0/terrain_set = 0
 0:0/0/terrain = 0
+0:0/0/terrains_peering_bit/bottom_right_corner = 1
 0:0/0/terrains_peering_bit/bottom_side = 0
+0:0/0/terrains_peering_bit/bottom_left_corner = 1
 1:0/0 = 0
 1:0/0/terrain_set = 0
 1:0/0/terrain = 0
@@ -87,7 +89,9 @@ texture = ExtResource("1_o718c")
 0:1/0/terrain_set = 0
 0:1/0/terrain = 0
 0:1/0/terrains_peering_bit/bottom_side = 0
+0:1/0/terrains_peering_bit/top_left_corner = 1
 0:1/0/terrains_peering_bit/top_side = 0
+0:1/0/terrains_peering_bit/top_right_corner = 1
 1:1/0 = 0
 1:1/0/terrain_set = 0
 1:1/0/terrain = 0
@@ -338,5 +342,7 @@ texture = ExtResource("1_o718c")
 tile_layout = 1
 terrain_set_0/mode = 0
 terrain_set_0/terrain_0/name = "Terrain 0"
-terrain_set_0/terrain_0/color = Color(0.458824, 0.654902, 0.262745, 1)
+terrain_set_0/terrain_0/color = Color(0.145098, 0.227451, 0.368627, 1)
+terrain_set_0/terrain_1/name = "Terrain 1"
+terrain_set_0/terrain_1/color = Color(0.458824, 0.654902, 0.262745, 1)
 sources/0 = SubResource("TileSetAtlasSource_fadyg")
