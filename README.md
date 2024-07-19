@@ -1,6 +1,6 @@
 # Automated-Terrain-Bitmasks
 
-An extremely rough look into generating terrain bitmasks autmatically from a template png image.
+An extremely rough proof of concept for generating terrain bitmasks autmatically from a template png image.
 
 Make a template file in an image editor
 ![image](https://github.com/user-attachments/assets/c760d3de-b628-42f3-9a89-7934afc0c204)
