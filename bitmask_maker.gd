@@ -10,10 +10,9 @@ class_name BitmaskMaker extends Node
 			update_tilemap()
 			pass
 
-# const BITMASK_TEPLATE = "res://mask16-g.png"
-const CELL_WIDTH = 16
-const CELL_HEIGHT = 16
-const TERRAIN_SET_ID = 0
+@export var TERRAIN_SET_ID = 0
+@export var CELL_WIDTH = 16
+@export var CELL_HEIGHT = 16
 
 class BitMaskImageCell:
 	var cell_x: int
