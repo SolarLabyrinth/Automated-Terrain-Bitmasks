@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bljmva117d6i7"
-path="res://.godot/imported/mask16.png-73100aabe19d6d2edeff3b328f418b72.ctex"
+uid="uid://diq4xjx0si51a"
+path="res://.godot/imported/terrain-tilemap-template.png-cbdf973929043a791674d7fb19d203c6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://mask16.png"
-dest_files=["res://.godot/imported/mask16.png-73100aabe19d6d2edeff3b328f418b72.ctex"]
+source_file="res://terrain-tilemap-template.png"
+dest_files=["res://.godot/imported/terrain-tilemap-template.png-cbdf973929043a791674d7fb19d203c6.ctex"]
 
 [params]
 

@@ -58,7 +58,7 @@ func parse_image(img: Image, cell_width: int, cell_height: int):
 			var bottom_side = img.get_pixel( x_offset + floor(cell_width / 2.0), y_offset + cell_height - 1 )
 			var bottom_right = img.get_pixel( x_offset + cell_width - 1, y_offset + cell_height - 1 )
 
-			for color in [top_left,top_side,top_right,middle_left,middle_side,middle_right,bottom_left,bottom_side,bottom_right]:
+			for color: Color in [top_left,top_side,top_right,middle_left,middle_side,middle_right,bottom_left,bottom_side,bottom_right]:
 				if color.a == 0.0:
 					continue
 				var hex_code = color.to_html()
@@ -100,7 +100,7 @@ func update_tilemap() -> void:
 		terrainColorToId[terrain_color] = terrain_id
 	
 	var new_terrain_index = tile_set.get_terrains_count(TERRAIN_SET_ID)
-	for terrain in result.terrains:
+	for terrain: Color in result.terrains:
 		var color = terrain.to_html()
 		if !terrainColorToId.has(color):
 			tile_set.add_terrain(TERRAIN_SET_ID)
@@ -115,7 +115,7 @@ func update_tilemap() -> void:
 	# print(tile_set.get_source_count())
 
 	# var grid_size = src.get_atlas_grid_size()
-	for cell in result.cells:
+	for cell: BitMaskImageCell in result.cells:
 		var data = src.get_tile_data(Vector2i(cell.cell_x, cell.cell_y), 0)
 		if terrainColorToId.has(cell.top_left.to_html()):
 			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER, terrainColorToId[cell.top_left.to_html()])
@@ -135,4 +135,3 @@ func update_tilemap() -> void:
 			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_SIDE, terrainColorToId[cell.bottom_side.to_html()])
 		if terrainColorToId.has(cell.bottom_right.to_html()):
 			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER, terrainColorToId[cell.bottom_right.to_html()])
-

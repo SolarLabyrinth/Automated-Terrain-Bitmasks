@@ -13,4 +13,3 @@ Run the script currently via running the scene
 
 Observe the terrains being added with the same colors as defined in your image.
 ![image](https://github.com/user-attachments/assets/ca2db6c4-5cf7-4f0f-820d-eef091452357)
-
