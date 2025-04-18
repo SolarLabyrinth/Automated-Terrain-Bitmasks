@@ -12,7 +12,6 @@ config_version=5
 
 config/name="Tile Map Test"
 config/features=PackedStringArray("4.4", "Forward Plus")
-config/icon="res://icon.svg"
 
 [debug]
 

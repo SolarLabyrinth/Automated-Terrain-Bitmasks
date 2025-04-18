@@ -6,168 +6,105 @@ func _popup_menu(paths: PackedStringArray) -> void:
 	print(paths)
 	add_context_menu_item('Apply Terrain Bitmap', on_test)
 
-
 const template = preload("res://terrain-tilemap-template.png")
 
-var tilemap: TileMapLayer
-#var template: Texture2D = TERRAIN_TILEMAP_TEMPLATE
-
-const TERRAIN_SET_ID = 0
-const CELL_WIDTH = 16
-const CELL_HEIGHT = 16
-
-
 func on_test(args: Array) -> void:
-	print(args)
-	tilemap = args[0]
-	print(template)
-	update_tilemap()
+	for arg in args:
+		if arg is TileMapLayer:
+			update_tile_map(arg)
 	pass
 
-
-
 class BitMaskImageCell:
-	var cell_x: int
-	var cell_y: int
-
-	var top_left: Color
-	var top_side: Color
-	var top_right: Color
-	var left_side: Color
-	var center: Color
-	var right_side: Color
-	var bottom_left: Color
-	var bottom_side: Color
-	var bottom_right: Color
-	
-	func _to_string() -> String:
-		return "X: %s, Y: %s\n%s %s %s\n%s %s %s\n%s %s %s" % [cell_x, cell_y, top_left.to_html(), top_side.to_html(),top_right.to_html(),left_side.to_html(),center.to_html(),right_side.to_html(),bottom_left.to_html(),bottom_side.to_html(),bottom_right.to_html()]
+	var coords: Vector2i
+	var terrain: Color
+	var neighbors: Dictionary[TileSet.CellNeighbor, Color]
 
 class BitMaskImageParseResult:
-	var terrains: Array[Color]
+	var colors: Array[Color]
 	var cells: Array[BitMaskImageCell]
 
-func parse_image(img: Image, cell_width: int, cell_height: int):
-	var hex_codes: Array[String] = []
-	var terrains: Array[Color] = []
-	var cells: Array[BitMaskImageCell] = []
+func parse_image(img: Image, cell_width: int, cell_height: int) -> BitMaskImageParseResult:
+	var result = BitMaskImageParseResult.new()
+	result.colors = [] as Array[Color]
+	result.cells = [] as Array[BitMaskImageCell]
 
 	var img_size = img.get_size()
+	var hex_codes: Array[String] = []
 	for y in range(img_size.y / cell_height):
 		for x in range(img_size.x / cell_width):
+			var cell = BitMaskImageCell.new()
+			cell.coords = Vector2(x, y)
+			
 			var x_offset = x * cell_width
 			var y_offset = y * cell_height
 
-			var top_left = img.get_pixel( x_offset + 0, y_offset + 0 )
-			var top_side = img.get_pixel( x_offset + floor(cell_width / 2.0), y_offset + 0 )
-			var top_right = img.get_pixel( x_offset + cell_width - 1, y_offset + 0 )
+			cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER] = img.get_pixel(x_offset + 0, y_offset + 0)
+			cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_SIDE] = img.get_pixel(x_offset + floor(cell_width / 2.0), y_offset + 0)
+			cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER] = img.get_pixel(x_offset + cell_width - 1, y_offset + 0)
 
-			var middle_left = img.get_pixel( x_offset + 0, y_offset + floor(cell_height / 2.0) )
-			var middle_side = img.get_pixel( x_offset + floor(cell_width / 2.0), y_offset + floor(cell_height / 2.0) )
-			var middle_right = img.get_pixel( x_offset + cell_width - 1, y_offset + floor(cell_height / 2.0) )
+			cell.neighbors[TileSet.CELL_NEIGHBOR_LEFT_SIDE] = img.get_pixel(x_offset + 0, y_offset + floor(cell_height / 2.0))
+			cell.terrain = img.get_pixel(x_offset + floor(cell_width / 2.0), y_offset + floor(cell_height / 2.0))
+			cell.neighbors[TileSet.CELL_NEIGHBOR_RIGHT_SIDE] = img.get_pixel(x_offset + cell_width - 1, y_offset + floor(cell_height / 2.0))
 
-			var bottom_left = img.get_pixel( x_offset + 0, y_offset + cell_height - 1 )
-			var bottom_side = img.get_pixel( x_offset + floor(cell_width / 2.0), y_offset + cell_height - 1 )
-			var bottom_right = img.get_pixel( x_offset + cell_width - 1, y_offset + cell_height - 1 )
-
-			for color: Color in [top_left,top_side,top_right,middle_left,middle_side,middle_right,bottom_left,bottom_side,bottom_right]:
+			cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER] = img.get_pixel(x_offset + 0, y_offset + cell_height - 1)
+			cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_SIDE] = img.get_pixel(x_offset + floor(cell_width / 2.0), y_offset + cell_height - 1)
+			cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER] = img.get_pixel(x_offset + cell_width - 1, y_offset + cell_height - 1)
+			
+			for color: Color in [cell.terrain] + cell.neighbors.values():
 				if color.a == 0.0:
 					continue
 				var hex_code = color.to_html()
 				if !hex_codes.has(hex_code):
 					hex_codes.push_back(hex_code)
-					terrains.push_back(color)
+					result.colors.push_back(color)
 
-			var cell = BitMaskImageCell.new()
-			cell.cell_x = x
-			cell.cell_y = y
-			cell.top_left = top_left
-			cell.top_side = top_side
-			cell.top_right = top_right
-			cell.left_side = middle_left
-			cell.center = middle_side
-			cell.right_side = middle_right
-			cell.bottom_left = bottom_left
-			cell.bottom_side = bottom_side
-			cell.bottom_right = bottom_right
-
-			cells.push_back(cell)
-	
-	var result = BitMaskImageParseResult.new()
-	result.terrains = terrains
-	result.cells = cells
+			result.cells.push_back(cell)
+			
 	return result
 
-func update_tilemap() -> void:
-	var tile_set = tilemap.tile_set
-	# template.
+func update_tile_map(tile_map: TileMapLayer) -> void:
+	var tile_set: TileSet = tile_map.tile_set
+	var result = parse_image(template.get_image(), tile_set.tile_size.x, tile_set.tile_size.y)
 
-	# var img = Image.load_from_file(BITMASK_TEPLATE)
-	print(template.get_image())
-	print(CELL_WIDTH)
-	print(CELL_HEIGHT)
-	var result = parse_image(template.get_image(), CELL_WIDTH, CELL_HEIGHT)
-	# print(result.terrains)
+	# Ensure there is at least one terrain set
+	var terrain_sets_count = tile_set.get_terrain_sets_count()
+	if terrain_sets_count == 0:
+		tile_set.add_terrain_set()
+		terrain_sets_count += 1
+	var terrain_set_index = terrain_sets_count - 1
 
+	# Collect existing terrains from the tile set
 	var terrainColorToId = {}
-	for terrain_id in range(tile_set.get_terrains_count(TERRAIN_SET_ID)):
-		var terrain_color = tile_set.get_terrain_color(TERRAIN_SET_ID, terrain_id).to_html()
-		terrainColorToId[terrain_color] = terrain_id
+	for terrain_index in range(tile_set.get_terrains_count(terrain_set_index)):
+		var color = tile_set.get_terrain_color(terrain_set_index, terrain_index).to_html()
+		terrainColorToId[color] = terrain_index
 	
-	var new_terrain_index = tile_set.get_terrains_count(TERRAIN_SET_ID)
-	for terrain: Color in result.terrains:
+	# Add new terrains from the parsed image
+	var new_terrain_index = tile_set.get_terrains_count(terrain_set_index)
+	for terrain: Color in result.colors:
 		var color = terrain.to_html()
 		if !terrainColorToId.has(color):
-			tile_set.add_terrain(TERRAIN_SET_ID)
-			tile_set.set_terrain_color(TERRAIN_SET_ID,new_terrain_index,terrain)
+			tile_set.add_terrain(terrain_set_index)
+			tile_set.set_terrain_color(terrain_set_index, new_terrain_index, terrain)
+			terrainColorToId[color] = new_terrain_index
 			new_terrain_index += 1
-
-	for terrain_id in range(tile_set.get_terrains_count(TERRAIN_SET_ID)):
-		var terrain_color = tile_set.get_terrain_color(TERRAIN_SET_ID, terrain_id).to_html()
-		terrainColorToId[terrain_color] = terrain_id
-
+	
+	# Update the tile map's terrain and peering bits to match template image
 	var src: TileSetAtlasSource = tile_set.get_source(0)
-	# print(tile_set.get_source_count())CELL_NEIGHBOR_TOP_LEFT_CORNER
-
-	# var grid_size = src.get_atlas_grid_size()
 	for cell: BitMaskImageCell in result.cells:
-		var has_tile = src.has_tile(Vector2i(cell.cell_x, cell.cell_y))
-		if(!has_tile): continue
+		var has_tile = src.has_tile(cell.coords)
+		if (!has_tile): continue
+		var data = src.get_tile_data(cell.coords, 0)
 		
-		var data = src.get_tile_data(Vector2i(cell.cell_x, cell.cell_y), 0)
-		if terrainColorToId.has(cell.top_left.to_html()):
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER, terrainColorToId[cell.top_left.to_html()])
-		else:
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER, -1)
-		if terrainColorToId.has(cell.top_side.to_html()):
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_SIDE, terrainColorToId[cell.top_side.to_html()])
-		else:
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_SIDE, -1)
-		if terrainColorToId.has(cell.top_right.to_html()):
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER, terrainColorToId[cell.top_right.to_html()])
-		else:
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER, -1)
-		if terrainColorToId.has(cell.left_side.to_html()):
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_LEFT_SIDE, terrainColorToId[cell.left_side.to_html()])
-		else:
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_LEFT_SIDE, -1)
-		if terrainColorToId.has(cell.center.to_html()):
-			data.terrain = terrainColorToId[cell.center.to_html()]
+		data.terrain_set = terrain_set_index
+
+		if terrainColorToId.has(cell.terrain.to_html()):
+			data.terrain = terrainColorToId[cell.terrain.to_html()]
 		else:
 			data.terrain = -1
-		if terrainColorToId.has(cell.right_side.to_html()):
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_RIGHT_SIDE, terrainColorToId[cell.right_side.to_html()])
-		else:
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_RIGHT_SIDE, -1)
-		if terrainColorToId.has(cell.bottom_left.to_html()):
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER, terrainColorToId[cell.bottom_left.to_html()])
-		else:
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER, -1)
-		if terrainColorToId.has(cell.bottom_side.to_html()):
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_SIDE, terrainColorToId[cell.bottom_side.to_html()])
-		else:
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_SIDE, -1)
-		if terrainColorToId.has(cell.bottom_right.to_html()):
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER, terrainColorToId[cell.bottom_right.to_html()])
-		else:
-			data.set_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER, -1)
+		for neighbor in cell.neighbors:
+			var color = cell.neighbors[neighbor].to_html()
+			if terrainColorToId.has(color):
+				data.set_terrain_peering_bit(neighbor, terrainColorToId[color])
+			else:
+				data.set_terrain_peering_bit(neighbor, -1)
