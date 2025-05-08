@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://diq4xjx0si51a"
-path="res://.godot/imported/terrain-tilemap-template.png-cbdf973929043a791674d7fb19d203c6.ctex"
+path="res://.godot/imported/terrain-tilemap-template.png-f55e9e14c9773b35f6169f7becb9d9c5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://terrain-tilemap-template.png"
-dest_files=["res://.godot/imported/terrain-tilemap-template.png-cbdf973929043a791674d7fb19d203c6.ctex"]
+source_file="res://addons/bitmask_automation/terrain-tilemap-template.png"
+dest_files=["res://.godot/imported/terrain-tilemap-template.png-f55e9e14c9773b35f6169f7becb9d9c5.ctex"]
 
 [params]
 

@@ -1,100 +1,190 @@
 @tool
-class_name BitmapAutomationContextMenuPlugin
 extends EditorContextMenuPlugin
 
 func _popup_menu(paths: PackedStringArray) -> void:
-	print(paths)
-	add_context_menu_item('Apply Terrain Bitmap', on_test)
+	for path in paths:
+		var node := EditorInterface.get_edited_scene_root().get_node(paths[0])
+		if node is TileMapLayer:
+			if node.tile_set.tile_shape == TileSet.TileShape.TILE_SHAPE_SQUARE:
+				add_context_menu_item('Apply Terrain Bitmap', on_apply)
+				#add_context_menu_item('Save Terrain Bitmap', on_save)
+				return
+				
+const template := preload("res://addons/bitmask_automation/terrain-tilemap-template.png")
 
-const template = preload("res://terrain-tilemap-template.png")
-
-func on_test(args: Array) -> void:
+func on_apply(args: Array) -> void:
 	for arg in args:
 		if arg is TileMapLayer:
-			update_tile_map(arg)
-	pass
+			update_tile_map(arg, template, 0)
+
+func on_save(args: Array) -> void:
+	for arg in args:
+		if arg is TileMapLayer:
+			print('here')
+			var terrain_set_index := prepare_terrain_set(arg.tile_set)
+			print('here')
+			var terrainColorToId := build_terrain_color_map(arg.tile_set, terrain_set_index, [])
+			print('here')
+			var abc := BitMaskImageParseResult.from_tile_set(arg.tile_set, 0, terrainColorToId).to_image()
+			print(abc)
+			abc.save_png('./test.png')
 
 class BitMaskImageCell:
 	var coords: Vector2i
 	var terrain: Color
 	var neighbors: Dictionary[TileSet.CellNeighbor, Color]
 
+	func print2():
+		print(coords)
+		print(neighbors[TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER].to_html(), neighbors[TileSet.CELL_NEIGHBOR_TOP_SIDE].to_html(), neighbors[TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER].to_html())
+		print(neighbors[TileSet.CELL_NEIGHBOR_LEFT_SIDE].to_html(), terrain.to_html(), neighbors[TileSet.CELL_NEIGHBOR_RIGHT_SIDE].to_html())
+		print(neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER].to_html(), neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_SIDE].to_html(), neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER].to_html())
+
 class BitMaskImageParseResult:
 	var colors: Array[Color]
 	var cells: Array[BitMaskImageCell]
+	var size: Vector2i
 
-func parse_image(img: Image, cell_width: int, cell_height: int) -> BitMaskImageParseResult:
-	var result = BitMaskImageParseResult.new()
-	result.colors = [] as Array[Color]
-	result.cells = [] as Array[BitMaskImageCell]
+	static func from_image(img: Image, cell_width: int, cell_height: int) -> BitMaskImageParseResult:
+		var result = BitMaskImageParseResult.new()
+		result.colors = [] as Array[Color]
+		result.cells = [] as Array[BitMaskImageCell]
 
-	var img_size = img.get_size()
-	var hex_codes: Array[String] = []
-	for y in range(img_size.y / cell_height):
-		for x in range(img_size.x / cell_width):
-			var cell = BitMaskImageCell.new()
-			cell.coords = Vector2(x, y)
-			
-			var x_offset = x * cell_width
-			var y_offset = y * cell_height
+		var img_size := img.get_size()
+		result.size = Vector2i(img_size.x / cell_width, img_size.y / cell_height)
 
-			cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER] = img.get_pixel(x_offset + 0, y_offset + 0)
-			cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_SIDE] = img.get_pixel(x_offset + floor(cell_width / 2.0), y_offset + 0)
-			cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER] = img.get_pixel(x_offset + cell_width - 1, y_offset + 0)
+		var hex_codes: Array[String] = []
+		for y in range(img_size.y / cell_height):
+			for x in range(img_size.x / cell_width):
+				var cell := BitMaskImageCell.new()
+				cell.coords = Vector2(x, y)
+				
+				var x_offset := x * cell_width
+				var y_offset := y * cell_height
 
-			cell.neighbors[TileSet.CELL_NEIGHBOR_LEFT_SIDE] = img.get_pixel(x_offset + 0, y_offset + floor(cell_height / 2.0))
-			cell.terrain = img.get_pixel(x_offset + floor(cell_width / 2.0), y_offset + floor(cell_height / 2.0))
-			cell.neighbors[TileSet.CELL_NEIGHBOR_RIGHT_SIDE] = img.get_pixel(x_offset + cell_width - 1, y_offset + floor(cell_height / 2.0))
+				cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER] = img.get_pixel(x_offset + 0, y_offset + 0)
+				cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_SIDE] = img.get_pixel(x_offset + floor(cell_width / 2.0), y_offset + 0)
+				cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER] = img.get_pixel(x_offset + cell_width - 1, y_offset + 0)
 
-			cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER] = img.get_pixel(x_offset + 0, y_offset + cell_height - 1)
-			cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_SIDE] = img.get_pixel(x_offset + floor(cell_width / 2.0), y_offset + cell_height - 1)
-			cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER] = img.get_pixel(x_offset + cell_width - 1, y_offset + cell_height - 1)
-			
-			for color: Color in [cell.terrain] + cell.neighbors.values():
-				if color.a == 0.0:
-					continue
-				var hex_code = color.to_html()
-				if !hex_codes.has(hex_code):
-					hex_codes.push_back(hex_code)
-					result.colors.push_back(color)
+				cell.neighbors[TileSet.CELL_NEIGHBOR_LEFT_SIDE] = img.get_pixel(x_offset + 0, y_offset + floor(cell_height / 2.0))
+				cell.terrain = img.get_pixel(x_offset + floor(cell_width / 2.0), y_offset + floor(cell_height / 2.0))
+				cell.neighbors[TileSet.CELL_NEIGHBOR_RIGHT_SIDE] = img.get_pixel(x_offset + cell_width - 1, y_offset + floor(cell_height / 2.0))
 
-			result.cells.push_back(cell)
-			
-	return result
+				cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER] = img.get_pixel(x_offset + 0, y_offset + cell_height - 1)
+				cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_SIDE] = img.get_pixel(x_offset + floor(cell_width / 2.0), y_offset + cell_height - 1)
+				cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER] = img.get_pixel(x_offset + cell_width - 1, y_offset + cell_height - 1)
+				
+				for color: Color in [cell.terrain] + cell.neighbors.values():
+					if color.a == 0.0:
+						continue
+					var hex_code := color.to_html()
+					if !hex_codes.has(hex_code):
+						hex_codes.push_back(hex_code)
+						result.colors.push_back(color)
 
-func update_tile_map(tile_map: TileMapLayer) -> void:
-	var tile_set: TileSet = tile_map.tile_set
-	var result = parse_image(template.get_image(), tile_set.tile_size.x, tile_set.tile_size.y)
+				result.cells.push_back(cell)
+				
+		return result
+	
+	static func from_tile_set(tile_set: TileSet, source_id: int, terrainColorToId: Dictionary[String, int]) -> BitMaskImageParseResult:
+		var source: TileSetAtlasSource = tile_set.get_source(source_id)
+		
+		var result = BitMaskImageParseResult.new()
+		result.colors = [] as Array[Color]
+		result.cells = [] as Array[BitMaskImageCell]
 
-	# Ensure there is at least one terrain set
-	var terrain_sets_count = tile_set.get_terrain_sets_count()
+		var source_size := source.get_atlas_grid_size()
+		result.size = source_size
+		
+		var hex_codes: Array[String] = []
+		for y in range(result.size.y):
+			for x in range(result.size.x):
+				var cell = BitMaskImageCell.new()
+				cell.coords = Vector2(x, y)
+
+				var data := source.get_tile_data(cell.coords, 0)
+				
+				cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER))
+				cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_SIDE] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_SIDE))
+				cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER))
+				
+				cell.neighbors[TileSet.CELL_NEIGHBOR_LEFT_SIDE] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_LEFT_SIDE))
+				cell.terrain = tile_set.get_terrain_color(data.terrain_set, data.terrain)
+				cell.neighbors[TileSet.CELL_NEIGHBOR_RIGHT_SIDE] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_RIGHT_SIDE))
+
+				cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER))
+				cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_SIDE] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_SIDE))
+				cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER))
+				
+				for color: Color in [cell.terrain] + cell.neighbors.values():
+					if color.a == 0.0:
+						continue
+					var hex_code := color.to_html()
+					if !hex_codes.has(hex_code):
+						hex_codes.push_back(hex_code)
+						result.colors.push_back(color)
+				
+				result.cells.push_back(cell)
+				
+		return result
+
+	func to_image() -> Image:
+		var img = Image.create(size.x * 3, size.y * 3, false, Image.Format.FORMAT_RGBA8)
+		for cell in cells:
+			var x = cell.coords.x
+			var y = cell.coords.y
+	
+			var x_offset = x * 3
+			var y_offset = y * 3
+
+			img.set_pixel(x_offset, y_offset, cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER])
+			img.set_pixel(x_offset + 1, y_offset, cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_SIDE])
+			img.set_pixel(x_offset + 2, y_offset, cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER])
+
+			img.set_pixel(x_offset, y_offset + 1, cell.neighbors[TileSet.CELL_NEIGHBOR_LEFT_SIDE])
+			img.set_pixel(x_offset + 1, y_offset + 1, cell.terrain)
+			img.set_pixel(x_offset + 2, y_offset + 1, cell.neighbors[TileSet.CELL_NEIGHBOR_RIGHT_SIDE])
+
+			img.set_pixel(x_offset, y_offset + 2, cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER])
+			img.set_pixel(x_offset + 1, y_offset + 2, cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_SIDE])
+			img.set_pixel(x_offset + 2, y_offset + 2, cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER])
+		return img
+
+func prepare_terrain_set(tile_set: TileSet) -> int:
+	var terrain_sets_count := tile_set.get_terrain_sets_count()
+
+	# Add a new terrain set if there is none yet.
 	if terrain_sets_count == 0:
 		tile_set.add_terrain_set()
 		terrain_sets_count += 1
-	var terrain_set_index = terrain_sets_count - 1
+	var terrain_set_index := terrain_sets_count - 1
 
+	return terrain_set_index
+
+func build_terrain_color_map(tile_set: TileSet, terrain_set_index: int, colors: Array[Color]) -> Dictionary[String, int]:
 	# Collect existing terrains from the tile set
-	var terrainColorToId = {}
+	var terrainColorToId: Dictionary[String, int] = {}
 	for terrain_index in range(tile_set.get_terrains_count(terrain_set_index)):
-		var color = tile_set.get_terrain_color(terrain_set_index, terrain_index).to_html()
+		var color := tile_set.get_terrain_color(terrain_set_index, terrain_index).to_html()
 		terrainColorToId[color] = terrain_index
 	
 	# Add new terrains from the parsed image
-	var new_terrain_index = tile_set.get_terrains_count(terrain_set_index)
-	for terrain: Color in result.colors:
-		var color = terrain.to_html()
+	var new_terrain_index := tile_set.get_terrains_count(terrain_set_index)
+	for terrain in colors:
+		var color := terrain.to_html()
 		if !terrainColorToId.has(color):
 			tile_set.add_terrain(terrain_set_index)
 			tile_set.set_terrain_color(terrain_set_index, new_terrain_index, terrain)
 			terrainColorToId[color] = new_terrain_index
 			new_terrain_index += 1
 	
-	# Update the tile map's terrain and peering bits to match template image
-	var src: TileSetAtlasSource = tile_set.get_source(0)
-	for cell: BitMaskImageCell in result.cells:
-		var has_tile = src.has_tile(cell.coords)
+	return terrainColorToId
+
+func apply_bitmap_to_source(src: TileSetSource, terrain_set_index: int, cells: Array[BitMaskImageCell], terrainColorToId: Dictionary[String, int]) -> void:
+	for cell in cells:
+		var has_tile := src.has_tile(cell.coords)
 		if (!has_tile): continue
-		var data = src.get_tile_data(cell.coords, 0)
+		var data: TileData = src.get_tile_data(cell.coords, 0)
 		
 		data.terrain_set = terrain_set_index
 
@@ -108,3 +198,15 @@ func update_tile_map(tile_map: TileMapLayer) -> void:
 				data.set_terrain_peering_bit(neighbor, terrainColorToId[color])
 			else:
 				data.set_terrain_peering_bit(neighbor, -1)
+
+func update_tile_map(tile_map: TileMapLayer, template: Texture2D, source_id: int) -> void:
+	var tile_set := tile_map.tile_set
+
+	var result := BitMaskImageParseResult.from_image(template.get_image(), tile_set.tile_size.x, tile_set.tile_size.y)
+
+	var terrain_set_index := prepare_terrain_set(tile_set)
+	var terrainColorToId := build_terrain_color_map(tile_set, terrain_set_index, result.colors)
+
+	var source := tile_set.get_source(source_id)
+
+	apply_bitmap_to_source(source, terrain_set_index, result.cells, terrainColorToId)
