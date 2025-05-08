@@ -1,6 +1,8 @@
 @tool
 extends EditorContextMenuPlugin
 
+const TILEMAP_SOURCE_ID = 1
+
 func _popup_menu(paths: PackedStringArray) -> void:
 	for path in paths:
 		var node := EditorInterface.get_edited_scene_root().get_node(paths[0])
@@ -15,7 +17,7 @@ const template := preload("res://addons/bitmask_automation/terrain-tilemap-templ
 func on_apply(args: Array) -> void:
 	for arg in args:
 		if arg is TileMapLayer:
-			update_tile_map(arg, template, 0)
+			update_tile_map(arg, template, TILEMAP_SOURCE_ID)
 
 func on_save(args: Array) -> void:
 	for arg in args:
@@ -25,7 +27,7 @@ func on_save(args: Array) -> void:
 			print('here')
 			var terrainColorToId := build_terrain_color_map(arg.tile_set, terrain_set_index, [])
 			print('here')
-			var abc := BitMaskImageParseResult.from_tile_set(arg.tile_set, 0, terrainColorToId).to_image()
+			var abc := BitMaskImageParseResult.from_tile_set(arg.tile_set, TILEMAP_SOURCE_ID, terrainColorToId).to_image()
 			print(abc)
 			abc.save_png('./test.png')
 
