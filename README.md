@@ -6,7 +6,7 @@ An extremely rough proof of concept for generating terrain bitmasks autmatically
 
 The terrain template is currently loaded from addons/bitmask_automation/terrain-tilemap-template.png
 
-Select a TileMapLayer in the node editor and choose "Terrain Tempaltes" in the bottom menu.
+Select a TileMapLayer in the node editor and choose "Terrain Templates" in the bottom menu.
 
 Pick the source you want to apply the template to and then click apply.
 
