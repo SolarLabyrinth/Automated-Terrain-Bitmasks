@@ -13,7 +13,7 @@ func _popup_menu(paths: PackedStringArray) -> void:
 				#return
 	pass
 
-const template := preload("res://addons/bitmask_automation/terrain-tilemap-template.png")
+#const template := preload("res://addons/bitmask_automation/terrain-tilemap-template.png")
 const Utils = preload("res://addons/bitmask_automation/utils.gd")
 
 func on_apply(args: Array) -> void:

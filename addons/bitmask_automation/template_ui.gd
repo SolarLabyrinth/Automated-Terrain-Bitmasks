@@ -15,7 +15,8 @@ const Utils = preload("res://addons/bitmask_automation/utils.gd")
 		if(tile_map):
 			tile_map.changed.disconnect(setup_source_list)
 		tile_map = value
-		tile_map.changed.connect(setup_source_list)
+		if(tile_map):
+			tile_map.changed.connect(setup_source_list)
 		setup_source_list()
 		check_apply_btn_disabled()
 
@@ -39,7 +40,7 @@ var selected_source_idx: int = 0:
 		var source := item_to_source_map.get(selected_source_idx, null)
 		if source:
 			selected_source = source
-		if source_select:
+		if source_select and source_select.item_count > 0:
 			source_select.select(selected_source_idx)
 
 var selected_source: TileSetAtlasSource:
@@ -84,10 +85,15 @@ func _ready() -> void:
 
 func _on_item_list_item_selected(index: int) -> void:
 	selected_source_idx = index
+	
+@onready var done_label: Label = %DoneLabel
 
 func _on_apply_button_pressed() -> void:
 	if tile_map and template_texture and selected_source:
 		Utils.update_tile_map(tile_map, template_texture, selected_source)
+		done_label.show()
+		await get_tree().create_timer(1).timeout
+		done_label.hide()
 
 @onready var file_dialog: FileDialog = $FileDialog
 
