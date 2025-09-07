@@ -12,10 +12,10 @@ const Utils = preload("res://addons/bitmask_automation/utils.gd")
 	get():
 		return tile_map
 	set(value):
-		if(tile_map):
+		if (tile_map):
 			tile_map.changed.disconnect(setup_source_list)
 		tile_map = value
-		if(tile_map):
+		if (tile_map):
 			tile_map.changed.connect(setup_source_list)
 		setup_source_list()
 		check_apply_btn_disabled()
@@ -95,12 +95,31 @@ func _on_apply_button_pressed() -> void:
 		await get_tree().create_timer(1).timeout
 		done_label.hide()
 
-@onready var file_dialog: FileDialog = $FileDialog
+func get_default_template_path():
+	var regex := RegEx.new()
+	regex.compile("^(.+)(\\..+)$")
+	return regex.sub(selected_source.texture.resource_path, "$1.template.png")
+
+@onready var load_dialog: FileDialog = $FileDialog
 
 func _on_pick_template_button_pressed() -> void:
-	file_dialog.popup()
+	load_dialog.current_path = get_default_template_path()
+	load_dialog.popup()
 
 func _on_file_dialog_file_selected(path: String) -> void:
 	var res = load(path)
 	if res is Texture2D:
 		template_texture = res
+
+@onready var save_dialog: FileDialog = $SaveDialog
+ 
+func _on_save_image_button_pressed() -> void:
+	save_dialog.current_path = get_default_template_path()
+	save_dialog.popup()
+
+func _on_save_dialog_file_selected(path: String) -> void:
+	var terrain_set_index := Utils.prepare_terrain_set(tile_map.tile_set)
+	var terrain_color_to_id := Utils.build_terrain_color_map(tile_map.tile_set, terrain_set_index, [])
+	var result := Utils.BitMaskImageParseResult.from_tile_set(tile_map.tile_set, selected_source_idx, terrain_color_to_id)
+	var image := result.to_image()
+	image.save_png(path)

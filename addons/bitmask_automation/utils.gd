@@ -81,6 +81,30 @@ class BitMaskImageParseResult:
 				
 		return result
 	
+
+	static func get_color_for_tile(source: TileSetAtlasSource, tile_set: TileSet, coords: Vector2i):
+		if (not source.has_tile(coords)):
+			return Color.TRANSPARENT
+		var data := source.get_tile_data(coords, 0)
+
+		if (data.terrain != -1):
+			return tile_set.get_terrain_color(data.terrain_set, data.terrain)
+		else:
+			return Color.TRANSPARENT
+	static func get_color_for_tile_neighbor(source: TileSetAtlasSource, tile_set: TileSet, coords: Vector2i, neighbor: TileSet.CellNeighbor):
+		if (not source.has_tile(coords)):
+			return Color.TRANSPARENT
+		var data := source.get_tile_data(coords, 0)
+
+		var bit := data.get_terrain_peering_bit(neighbor)
+
+		# For some reason, this api is broke. Fun times.
+		# if (data.is_valid_terrain_peering_bit(bit)):
+		if (bit != -1):
+			return tile_set.get_terrain_color(data.terrain_set, bit)
+		else:
+			return Color.TRANSPARENT
+
 	static func from_tile_set(tile_set: TileSet, source_id: int, terrainColorToId: Dictionary[String, int]) -> BitMaskImageParseResult:
 		var source: TileSetAtlasSource = tile_set.get_source(source_id)
 		
@@ -95,21 +119,19 @@ class BitMaskImageParseResult:
 		for y in range(result.size.y):
 			for x in range(result.size.x):
 				var cell = BitMaskImageCell.new()
-				cell.coords = Vector2(x, y)
-
-				var data := source.get_tile_data(cell.coords, 0)
+				cell.coords = Vector2i(x, y)
 				
-				cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER))
-				cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_SIDE] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_SIDE))
-				cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER))
+				cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER] = get_color_for_tile_neighbor(source, tile_set, cell.coords, TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER)
+				cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_SIDE] = get_color_for_tile_neighbor(source, tile_set, cell.coords, TileSet.CELL_NEIGHBOR_TOP_SIDE)
+				cell.neighbors[TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER] = get_color_for_tile_neighbor(source, tile_set, cell.coords, TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER)
 				
-				cell.neighbors[TileSet.CELL_NEIGHBOR_LEFT_SIDE] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_LEFT_SIDE))
-				cell.terrain = tile_set.get_terrain_color(data.terrain_set, data.terrain)
-				cell.neighbors[TileSet.CELL_NEIGHBOR_RIGHT_SIDE] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_RIGHT_SIDE))
+				cell.neighbors[TileSet.CELL_NEIGHBOR_LEFT_SIDE] = get_color_for_tile_neighbor(source, tile_set, cell.coords, TileSet.CELL_NEIGHBOR_LEFT_SIDE)
+				cell.terrain = get_color_for_tile(source, tile_set, cell.coords)
+				cell.neighbors[TileSet.CELL_NEIGHBOR_RIGHT_SIDE] = get_color_for_tile_neighbor(source, tile_set, cell.coords, TileSet.CELL_NEIGHBOR_RIGHT_SIDE)
 
-				cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER))
-				cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_SIDE] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_SIDE))
-				cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER] = tile_set.get_terrain_color(data.terrain_set, data.get_terrain_peering_bit(TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER))
+				cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER] = get_color_for_tile_neighbor(source, tile_set, cell.coords, TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER)
+				cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_SIDE] = get_color_for_tile_neighbor(source, tile_set, cell.coords, TileSet.CELL_NEIGHBOR_BOTTOM_SIDE)
+				cell.neighbors[TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER] = get_color_for_tile_neighbor(source, tile_set, cell.coords, TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER)
 				
 				for color: Color in [cell.terrain] + cell.neighbors.values():
 					if color.a == 0.0:
