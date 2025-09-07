@@ -8,8 +8,8 @@ func _exit_tree() -> void:
 	get_editor_interface().get_selection().selection_changed.disconnect(on_selection_changed)
 	cleanup_control()
 
-const SolarTerrainTemplateEditorUI = preload("res://addons/bitmask_automation/template_ui.gd")
-const TEMPLATE_UI = preload("res://addons/bitmask_automation/template_ui.tscn")
+const SolarTerrainTemplateEditorUI = preload("res://addons/tilemap_templates/template_ui.gd")
+const TEMPLATE_UI = preload("res://addons/tilemap_templates/template_ui.tscn")
 
 var control: SolarTerrainTemplateEditorUI
 func cleanup_control():

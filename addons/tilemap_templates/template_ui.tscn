@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://cwkcdrg34nj40"]
 
-[ext_resource type="Script" uid="uid://uko5wqkb3uiy" path="res://addons/bitmask_automation/template_ui.gd" id="1_f5ivy"]
+[ext_resource type="Script" uid="uid://uko5wqkb3uiy" path="res://addons/tilemap_templates/template_ui.gd" id="1_f5ivy"]
 
 [node name="TemplateUi" type="Control"]
 layout_mode = 3

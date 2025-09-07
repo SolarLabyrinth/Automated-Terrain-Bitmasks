@@ -1,7 +1,7 @@
 @tool
 extends Control
 
-const Utils = preload("res://addons/bitmask_automation/utils.gd")
+const Utils = preload("res://addons/tilemap_templates/utils.gd")
 
 @onready var source_select: ItemList = %SourceSelect
 @onready var source_texture_rect: TextureRect = %SourceTextureRect
